@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Check for URL
+URL=""
+INTERVAL="10"
+for arg in "$@"; do
+    case "$arg" in
+        "--url="*) URL="${arg#--url=}" ;;
+        "--interval="*) INTERVAL="${arg#--interval=}" ;;
+        *) echo "!> Argument \"$arg\" is unsupported"; exit 1 ;;
+    esac
+done
+
+if [ "$URL" == "" ]; then
+    echo "!> The argument \"--url=\" is required"
+    exit 1
+fi
+
+
+# Compute initial hash
+echo "*> Computing initial hash..."
+HASH=$(curl -s "$URL" | b2sum)
+if [ $? -ne 0 ]; then
+    echo "!> Failed to compute initial hash"
+    exit 2
+fi
+
+
+# Check hash periodically
+while true; do
+    echo "*> Comparing hash..."
+    NEW_HASH=$(curl -s "$URL" | b2sum)
+    if [ $? -ne 0 ]; then continue; fi
+    if [ "$NEW_HASH" != "$HASH" ]; then echo "*> Hashes differ!\a"; fi
+    sleep "$INTERVAL"
+done
