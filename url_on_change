@@ -24,6 +24,7 @@ if [ $? -ne 0 ]; then
     echo "!> Failed to compute initial hash"
     exit 2
 fi
+sleep "$INTERVAL"
 
 
 # Check hash periodically
