@@ -2,7 +2,7 @@
 
 # Helper-function to print the hash
 function short_hash {
-    printf "#%s…%s" "${1::4}" "${1:${#1}-4}"
+    printf "%s…%s" "${1::4}" "${1:${#1}-4}"
 }
 
 # Check for URL
