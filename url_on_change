@@ -1,4 +1,9 @@
-#!/bin/sh
+#!/bin/bash
+
+# Helper-function to print the hash
+function short_hash {
+    printf "#%s…%s" "${1::4}" "${1:${#1}-4}"
+}
 
 # Check for URL
 URL=""
@@ -19,10 +24,12 @@ fi
 
 # Compute initial hash
 echo "*> Computing initial hash..."
-HASH=$(curl -s "$URL" | b2sum)
+HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256)
 if [ $? -ne 0 ]; then
-    echo "!> Failed to compute initial hash"
+    echo "!> Failed to hash URL"
     exit 2
+else 
+    echo "    Hash is $(short_hash $HASH)"
 fi
 sleep "$INTERVAL"
 
@@ -30,8 +37,14 @@ sleep "$INTERVAL"
 # Check hash periodically
 while true; do
     echo "*> Comparing hash..."
-    NEW_HASH=$(curl -s "$URL" | b2sum)
-    if [ $? -ne 0 ]; then continue; fi
-    if [ "$NEW_HASH" != "$HASH" ]; then echo "*> Hashes differ!\a"; fi
+    NEW_HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256)
+    if [ $? -ne 0 ]; then
+        echo "    Download failed; skipping..."
+        continue
+    elif [ "$NEW_HASH" != "$HASH" ]; then
+        echo -e "    $(short_hash $HASH) vs. $(short_hash $NEW_HASH) -> hashes differ!\a"
+    else
+        echo "    $(short_hash $HASH) vs. $(short_hash $NEW_HASH) -> hashes are equal"
+    fi
     sleep "$INTERVAL"
 done
