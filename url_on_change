@@ -24,7 +24,7 @@ fi
 
 # Compute initial hash
 echo "*> Computing initial hash..."
-HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256)
+HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256 | tail -c +9)
 if [ $? -ne 0 ]; then
     echo "!> Failed to hash URL"
     exit 2
@@ -37,7 +37,7 @@ sleep "$INTERVAL"
 # Check hash periodically
 while true; do
     echo "*> Comparing hash..."
-    NEW_HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256)
+    NEW_HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256 | tail -c +9)
     if [ $? -ne 0 ]; then
         echo "    Download failed; skipping..."
         continue
