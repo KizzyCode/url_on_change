@@ -2,23 +2,23 @@
 
 # Helper-function to print the hash
 function short_hash {
-    printf "%s…%s" "${1::4}" "${1:${#1}-4}"
+	printf "%s…%s" "${1::4}" "${1:${#1}-4}"
 }
 
 # Check for URL
 URL=""
 INTERVAL="10"
 for arg in "$@"; do
-    case "$arg" in
-        "--url="*) URL="${arg#--url=}" ;;
-        "--interval="*) INTERVAL="${arg#--interval=}" ;;
-        *) echo "!> Argument \"$arg\" is unsupported"; exit 1 ;;
-    esac
+	case "$arg" in
+		"--url="*) URL="${arg#--url=}" ;;
+		"--interval="*) INTERVAL="${arg#--interval=}" ;;
+		*) echo "!> Argument \"$arg\" is unsupported"; exit 1 ;;
+	esac
 done
 
 if [ "$URL" == "" ]; then
-    echo "!> The argument \"--url=\" is required"
-    exit 1
+	echo "!> The argument \"--url=\" is required"
+	exit 1
 fi
 
 
@@ -26,25 +26,28 @@ fi
 echo "*> Computing initial hash..."
 HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256 | tail -c +9)
 if [ $? -ne 0 ]; then
-    echo "!> Failed to hash URL"
-    exit 2
+	echo "!> Failed to hash URL"
+	exit 2
 else 
-    echo "    Hash is $(short_hash $HASH)"
+	echo "    Hash is $(short_hash $HASH)"
 fi
 sleep "$INTERVAL"
 
 
 # Check hash periodically
+COUNTER=0
 while true; do
-    echo "*> Comparing hash..."
-    NEW_HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256 | tail -c +9)
-    if [ $? -ne 0 ]; then
-        echo "    Download failed; skipping..."
-        continue
-    elif [ "$NEW_HASH" != "$HASH" ]; then
-        echo -e "    $(short_hash $HASH) vs. $(short_hash $NEW_HASH) -> hashes differ!\a"
-    else
-        echo "    $(short_hash $HASH) vs. $(short_hash $NEW_HASH) -> hashes are equal"
-    fi
-    sleep "$INTERVAL"
+	echo "*> Comparing hash ($COUNTER)..."
+	COUNTER=$(($COUNTER + 1))
+
+	NEW_HASH=$(set -o pipefail; curl -s "$URL" | openssl dgst -sha256 | tail -c +9)
+	if [ $? -ne 0 ]; then
+		echo "    Download failed; skipping..."
+		continue
+	elif [ "$NEW_HASH" != "$HASH" ]; then
+		echo -e "    $(short_hash $HASH) vs. $(short_hash $NEW_HASH) -> hashes differ!\a"
+	else
+		echo "    $(short_hash $HASH) vs. $(short_hash $NEW_HASH) -> hashes are equal"
+	fi
+	sleep "$INTERVAL"
 done
